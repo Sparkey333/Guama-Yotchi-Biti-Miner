@@ -51,34 +51,43 @@ export default function Ai() {
       // Add empty assistant message to be filled
       setMessages(prev => [...prev, { role: "assistant", content: "" }]);
 
+      let buffer = "";
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
+        buffer += decoder.decode(value, { stream: true });
+        // SSE events are separated by a blank line ("\n\n"). Anything after the
+        // last separator is a partial event we keep in the buffer for next read.
+        const events = buffer.split("\n\n");
+        buffer = events.pop() ?? "";
 
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const dataStr = line.slice(6);
-            if (!dataStr) continue;
+        for (const event of events) {
+          // An event can contain multiple "data:" lines per the SSE spec; join them.
+          const dataLines = event
+            .split("\n")
+            .filter(l => l.startsWith("data:"))
+            .map(l => l.slice(l.startsWith("data: ") ? 6 : 5));
+          if (dataLines.length === 0) continue;
+          const dataStr = dataLines.join("\n");
+          if (!dataStr) continue;
 
-            try {
-              const data = JSON.parse(dataStr);
-              if (data.content) {
-                assistantMessage += data.content;
-                setMessages(prev => {
-                  const newMessages = [...prev];
-                  newMessages[newMessages.length - 1].content = assistantMessage;
-                  return newMessages;
-                });
-              }
-              if (data.done) {
-                break;
-              }
-            } catch (err) {
-              console.error("Error parsing SSE:", err);
+          try {
+            const data = JSON.parse(dataStr);
+            if (data.content) {
+              assistantMessage += data.content;
+              setMessages(prev => {
+                const newMessages = [...prev];
+                newMessages[newMessages.length - 1].content = assistantMessage;
+                return newMessages;
+              });
             }
+            if (data.done) {
+              buffer = "";
+              break;
+            }
+          } catch (err) {
+            console.error("Error parsing SSE:", err);
           }
         }
       }

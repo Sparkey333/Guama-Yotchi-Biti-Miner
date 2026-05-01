@@ -1,4 +1,5 @@
-import { useGetMinerConfig, useUpdateMinerConfig } from "@workspace/api-client-react";
+import { useGetMinerConfig, useUpdateMinerConfig, getGetMinerConfigQueryKey, getGetMinerStatusQueryKey } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -23,6 +24,7 @@ const configSchema = z.object({
 type ConfigFormValues = z.infer<typeof configSchema>;
 
 export default function Setup() {
+  const queryClient = useQueryClient();
   const { data: config, isLoading } = useGetMinerConfig();
   const updateConfig = useUpdateMinerConfig();
   const initRef = useRef(false);
@@ -60,6 +62,8 @@ export default function Setup() {
       { data },
       {
         onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getGetMinerConfigQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetMinerStatusQueryKey() });
           toast.success("CONFIG FLASHED TO ROM");
         },
         onError: () => {
