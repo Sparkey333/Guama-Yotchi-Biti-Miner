@@ -1,0 +1,16 @@
+[Unit]
+Description=Guama-Yotchi-Biti-Miner Pi client
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/Guama-Yotchi-Biti-Miner/pi
+ExecStart=/usr/bin/python3 /home/pi/Guama-Yotchi-Biti-Miner/pi/miner.py
+Restart=on-failure
+RestartSec=5
+User=pi
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

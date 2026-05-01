@@ -1,0 +1,564 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Guama-Yotchi-Biti-Miner API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+  - name: miner
+  - name: ai
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthStatus" }
+
+  /miner/status:
+    get:
+      operationId: getMinerStatus
+      tags: [miner]
+      summary: Live miner status (buddy + stats)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MinerStatus" }
+
+  /miner/start:
+    post:
+      operationId: startMiner
+      tags: [miner]
+      summary: Start mining
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MinerStatus" }
+
+  /miner/stop:
+    post:
+      operationId: stopMiner
+      tags: [miner]
+      summary: Stop mining
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MinerStatus" }
+
+  /miner/overclock:
+    post:
+      operationId: triggerOverclock
+      tags: [miner]
+      summary: Click rapidly to overclock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OverclockBody" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OverclockResult" }
+
+  /miner/feed:
+    post:
+      operationId: feedBuddy
+      tags: [miner]
+      summary: Feed / pet the buddy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FeedBody" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MinerStatus" }
+
+  /miner/profile:
+    get:
+      operationId: getPowerProfile
+      tags: [miner]
+      summary: Active power profile
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PowerProfileState" }
+    put:
+      operationId: setPowerProfile
+      tags: [miner]
+      summary: Change power profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SetPowerProfileBody" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PowerProfileState" }
+
+  /miner/config:
+    get:
+      operationId: getMinerConfig
+      tags: [miner]
+      summary: Current wallet/pool/mode config
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MinerConfig" }
+    put:
+      operationId: updateMinerConfig
+      tags: [miner]
+      summary: Update wallet/pool/demo config
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateMinerConfigBody" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MinerConfig" }
+
+  /miner/history:
+    get:
+      operationId: getMinerHistory
+      tags: [miner]
+      summary: Recent telemetry history (hashrate / power / earnings)
+      parameters:
+        - in: query
+          name: minutes
+          schema: { type: integer, default: 60, minimum: 1, maximum: 1440 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TelemetryPoint" }
+
+  /miner/heatmap:
+    get:
+      operationId: getProfitHeatmap
+      tags: [miner]
+      summary: 24h profit-by-hour heatmap (best times to mine)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProfitHeatmap" }
+
+  /miner/achievements:
+    get:
+      operationId: listAchievements
+      tags: [miner]
+      summary: Sticker / achievement list
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Achievement" }
+
+  /miner/missions:
+    get:
+      operationId: listMissions
+      tags: [miner]
+      summary: Today's missions
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Mission" }
+
+  /miner/price:
+    get:
+      operationId: getBtcPrice
+      tags: [miner]
+      summary: Current BTC price (USD)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PriceQuote" }
+
+  /miner/devices:
+    get:
+      operationId: listDevices
+      tags: [miner]
+      summary: Connected miner devices (Pi, PC, ESP32)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Device" }
+
+  /miner/telemetry:
+    post:
+      operationId: ingestTelemetry
+      tags: [miner]
+      summary: Ingest telemetry from a remote miner (Pi / PC worker)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IngestTelemetryBody" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IngestTelemetryAck" }
+
+  /ai/presets:
+    get:
+      operationId: listAiPresets
+      tags: [ai]
+      summary: Preset AI prompt ideas / connector setup ideas
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AiPreset" }
+
+  /ai/chat:
+    post:
+      operationId: aiChat
+      tags: [ai]
+      summary: Ask the AI buddy (Anthropic or OpenAI). Returns SSE stream.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AiChatBody" }
+      responses:
+        "200":
+          description: SSE stream of {content} chunks then {done:true}
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status: { type: string }
+      required: [status]
+
+    PowerProfile:
+      type: string
+      enum: [eco, balanced, turbo, solar]
+      description: Eco low watt, Balanced default, Turbo max profit, Solar matches battery %
+
+    BuddyMood:
+      type: string
+      enum: [happy, hyped, sleepy, sad, hungry, sick, offline]
+
+    MinerStatus:
+      type: object
+      properties:
+        running: { type: boolean }
+        mode: { type: string, enum: [demo, real] }
+        profile: { $ref: "#/components/schemas/PowerProfile" }
+        mood: { $ref: "#/components/schemas/BuddyMood" }
+        buddyName: { type: string }
+        buddyLevel: { type: integer }
+        buddyXp: { type: number }
+        buddyHunger: { type: number, description: 0..100 }
+        hashrateGhs: { type: number, description: gigahashes/sec (display value) }
+        powerWatts: { type: number }
+        profitPerWatt: { type: number, description: USD/day per watt }
+        estDailyUsd: { type: number }
+        estMonthlyUsd: { type: number }
+        sharesAccepted: { type: integer }
+        sharesRejected: { type: integer }
+        bestDifficulty: { type: number }
+        workers: { type: integer }
+        uptimeSec: { type: integer }
+        ipAddress: { type: string }
+        overclockActive: { type: boolean }
+        overclockMultiplier: { type: number }
+        overclockHeat: { type: number, description: 0..100 risk }
+        overclockCooldownSec: { type: integer }
+        batteryPercent: { type: number, description: solar profile battery % }
+        streakDays: { type: integer }
+        btcPriceUsd: { type: number }
+        timestamp: { type: string, format: date-time }
+      required:
+        [
+          running,
+          mode,
+          profile,
+          mood,
+          buddyName,
+          buddyLevel,
+          buddyXp,
+          buddyHunger,
+          hashrateGhs,
+          powerWatts,
+          profitPerWatt,
+          estDailyUsd,
+          estMonthlyUsd,
+          sharesAccepted,
+          sharesRejected,
+          bestDifficulty,
+          workers,
+          uptimeSec,
+          ipAddress,
+          overclockActive,
+          overclockMultiplier,
+          overclockHeat,
+          overclockCooldownSec,
+          batteryPercent,
+          streakDays,
+          btcPriceUsd,
+          timestamp,
+        ]
+
+    OverclockBody:
+      type: object
+      properties:
+        clicks: { type: integer, minimum: 1, maximum: 100 }
+      required: [clicks]
+
+    OverclockResult:
+      type: object
+      properties:
+        accepted: { type: boolean }
+        multiplier: { type: number }
+        heat: { type: number }
+        cooldownSec: { type: integer }
+        reason: { type: string, nullable: true }
+      required: [accepted, multiplier, heat, cooldownSec]
+
+    FeedBody:
+      type: object
+      properties:
+        action: { type: string, enum: [feed, pet, clean] }
+      required: [action]
+
+    PowerProfileState:
+      type: object
+      properties:
+        profile: { $ref: "#/components/schemas/PowerProfile" }
+        targetWatts: { type: number }
+        targetHashrateGhs: { type: number }
+        batteryPercent: { type: number }
+      required: [profile, targetWatts, targetHashrateGhs, batteryPercent]
+
+    SetPowerProfileBody:
+      type: object
+      properties:
+        profile: { $ref: "#/components/schemas/PowerProfile" }
+        batteryPercent:
+          type: number
+          nullable: true
+          minimum: 0
+          maximum: 100
+      required: [profile]
+
+    MinerConfig:
+      type: object
+      properties:
+        mode: { type: string, enum: [demo, real] }
+        buddyName: { type: string }
+        walletAddress: { type: string, nullable: true }
+        poolUrl: { type: string }
+        workerName: { type: string }
+        electricityCostKwh: { type: number, description: USD per kWh }
+        pcMinerEnabled: { type: boolean }
+      required:
+        [
+          mode,
+          buddyName,
+          poolUrl,
+          workerName,
+          electricityCostKwh,
+          pcMinerEnabled,
+        ]
+
+    UpdateMinerConfigBody:
+      type: object
+      properties:
+        mode: { type: string, enum: [demo, real], nullable: true }
+        buddyName: { type: string, nullable: true }
+        walletAddress: { type: string, nullable: true }
+        poolUrl: { type: string, nullable: true }
+        workerName: { type: string, nullable: true }
+        electricityCostKwh: { type: number, nullable: true }
+        pcMinerEnabled: { type: boolean, nullable: true }
+
+    TelemetryPoint:
+      type: object
+      properties:
+        t: { type: string, format: date-time }
+        hashrateGhs: { type: number }
+        powerWatts: { type: number }
+        earningsUsd: { type: number }
+        sharesAccepted: { type: integer }
+        sharesRejected: { type: integer }
+        deviceId: { type: string }
+      required:
+        [
+          t,
+          hashrateGhs,
+          powerWatts,
+          earningsUsd,
+          sharesAccepted,
+          sharesRejected,
+          deviceId,
+        ]
+
+    ProfitHeatmapHour:
+      type: object
+      properties:
+        hour: { type: integer, minimum: 0, maximum: 23 }
+        profitScore: { type: number, description: 0..100 }
+        netUsd: { type: number }
+        avgPriceUsd: { type: number }
+        avgPowerCostUsd: { type: number }
+      required: [hour, profitScore, netUsd, avgPriceUsd, avgPowerCostUsd]
+
+    ProfitHeatmap:
+      type: object
+      properties:
+        hours:
+          type: array
+          items: { $ref: "#/components/schemas/ProfitHeatmapHour" }
+        bestHour: { type: integer }
+        worstHour: { type: integer }
+      required: [hours, bestHour, worstHour]
+
+    Achievement:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        sticker: { type: string, description: emoji-free sticker code }
+        earnedAt: { type: string, format: date-time, nullable: true }
+        progress: { type: number, description: 0..1 }
+      required: [id, name, description, sticker, progress]
+
+    Mission:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        target: { type: number }
+        current: { type: number }
+        unit: { type: string }
+        rewardXp: { type: integer }
+        completed: { type: boolean }
+      required: [id, title, target, current, unit, rewardXp, completed]
+
+    PriceQuote:
+      type: object
+      properties:
+        usd: { type: number }
+        change24hPct: { type: number }
+        source: { type: string }
+        timestamp: { type: string, format: date-time }
+      required: [usd, change24hPct, source, timestamp]
+
+    Device:
+      type: object
+      properties:
+        id: { type: string }
+        label: { type: string }
+        kind: { type: string, enum: [pi, pc, esp32, sim] }
+        online: { type: boolean }
+        hashrateGhs: { type: number }
+        powerWatts: { type: number }
+        lastSeen: { type: string, format: date-time }
+      required: [id, label, kind, online, hashrateGhs, powerWatts, lastSeen]
+
+    IngestTelemetryBody:
+      type: object
+      properties:
+        deviceId: { type: string }
+        label: { type: string }
+        kind: { type: string, enum: [pi, pc, esp32, sim] }
+        hashrateGhs: { type: number }
+        powerWatts: { type: number }
+        sharesAccepted: { type: integer }
+        sharesRejected: { type: integer }
+      required:
+        [
+          deviceId,
+          label,
+          kind,
+          hashrateGhs,
+          powerWatts,
+          sharesAccepted,
+          sharesRejected,
+        ]
+
+    IngestTelemetryAck:
+      type: object
+      properties:
+        ok: { type: boolean }
+        profile: { $ref: "#/components/schemas/PowerProfile" }
+        suggestedHashrateGhs: { type: number }
+      required: [ok, profile, suggestedHashrateGhs]
+
+    AiPreset:
+      type: object
+      properties:
+        id: { type: string }
+        label: { type: string }
+        prompt: { type: string }
+        category:
+          type: string
+          enum: [automation, optimization, hardware, solar, gamify, connector]
+      required: [id, label, prompt, category]
+
+    AiChatBody:
+      type: object
+      properties:
+        message: { type: string }
+        model: { type: string, enum: [claude, gpt] }
+      required: [message, model]

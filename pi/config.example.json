@@ -1,0 +1,18 @@
+{
+  "base_url": "http://localhost:5000",
+  "device_id": "pi-deck",
+  "label": "PI 5 DECK",
+  "kind": "pi",
+  "interval_sec": 5,
+  "mode": "demo",
+  "wallet": "",
+  "pool": "stratum+tcp://solo.ckpool.org:3333",
+  "worker": "guama-yotchi",
+  "threads": 1,
+  "solar": {
+    "enabled": false,
+    "battery_file": "/tmp/battery.txt",
+    "low_pct": 25,
+    "high_pct": 60
+  }
+}
